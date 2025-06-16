@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "LaplaPy"
-version = "0.1.2"
+version = "0.1.3"
 description = "Symbolic derivative & Laplace transform with step-by-step output"
 readme = "README.md"
 authors = [{name="GALIH RIDHO UTOMO", email="g4lihru@students.unnes.ac.id"}]
