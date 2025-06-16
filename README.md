@@ -3,15 +3,6 @@
 **Scientific Computing Package for Differential Equations, System Analysis, and Control Theory**  
 A comprehensive Python library for symbolic Laplace transforms with rigorous mathematical foundations, designed for engineers, scientists, and researchers.
 
-<p align="center" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0.5em;">
-  <a href="https://pypi.org/project/LaplaPy/">
-    <img src="https://img.shields.io/pypi/v/LaplaPy.svg" alt="PyPI version"/>
-  </a>
-  <a href="https://pypi.org/project/laplapy/">
-    <img src="https://img.shields.io/pypi/dm/laplapy.svg" alt="PyPI downloads"/>
-  </a>
-</p>
-
 ---
 
 ## Overview
