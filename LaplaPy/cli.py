@@ -1,7 +1,9 @@
 import argparse
 import sys
-from sympy import Eq, sympify, pretty
+from sympy import Eq, sympify, pretty, symbols
 from .core import LaplaceOperator
+
+t, s = symbols('t s', real=True, positive=True)
 
 def parse_initial_conditions(ic_list):
     """Parse list like ['f(0)=1', \"f'(0)=0\"] → {0:1.0,1:0.0}"""
@@ -38,13 +40,23 @@ def main():
     args = parser.parse_args()
     ics = parse_initial_conditions(args.ic)
 
-    expr = args.expr
+    expr_str = args.expr
+
     if args.ode:
-        try:
-            expr = sympify(expr, locals={})
-        except Exception as e:
-            print(f"Error parsing ODE: {e}", file=sys.stderr)
+        if "=" in expr_str:
+            lhs_str, rhs_str = expr_str.split("=", 1)
+            try:
+                lhs = sympify(lhs_str, locals={'t': t})
+                rhs = sympify(rhs_str, locals={'t': t})
+                expr = Eq(lhs, rhs)
+            except Exception as e:
+                print(f"Error parsing ODE sides: {e}", file=sys.stderr)
+                sys.exit(1)
+        else:
+            print("Error: ODE must contain '=' to separate LHS and RHS.", file=sys.stderr)
             sys.exit(1)
+    else:
+        expr = sympify(expr_str, locals={'t': t})
 
     op = LaplaceOperator(expr,
                          causal=args.causal,
