@@ -15,6 +15,9 @@ classifiers = [
   "License :: OSI Approved :: MIT License"
 ]
 
+[project.scripts]
+LaplaPy = "LaplaPy.cli:main"
+
 [project.urls]
 "Homepage" = "https://github.com/4211421036/LaplaPy"
 "Repository" = "https://github.com/4211421036/LaplaPy"
