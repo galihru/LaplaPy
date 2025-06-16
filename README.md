@@ -8,7 +8,7 @@ A comprehensive Python library for symbolic Laplace transforms with rigorous mat
     <img src="https://img.shields.io/pypi/v/LaplaPy.svg" alt="PyPI version"/>
   </a>
   <a href="https://pypi.org/project/LaplaPy/">
-    <img src="https://img.shields.io/pypi/dm/LaplaPy.svg" alt="PyPI downloads"/>
+    <img src="https://img.shields.io/pypi/dm/laplapy.svg" alt="PyPI downloads"/>
   </a>
 </p>
 
