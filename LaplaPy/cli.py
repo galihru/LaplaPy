@@ -9,7 +9,7 @@ def parse_initial_conditions(ic_list):
     ics = {}
     for ic_str in ic_list or []:
         key, val = ic_str.split("=")
-        order = key.count("'")  # jumlah prime → order
+        order = key.count("'")
         ics[order] = float(val)
     return ics
 
@@ -38,7 +38,6 @@ def main():
     args = parser.parse_args()
     ics = parse_initial_conditions(args.ic)
 
-    # Jika ODE mode, parse string menjadi Eq(lhs, rhs)
     if args.ode:
         if "=" not in args.expr:
             print("Error: ODE must contain '=' to separate LHS and RHS.", file=sys.stderr)
@@ -52,7 +51,6 @@ def main():
             print(f"Error parsing ODE: {e}", file=sys.stderr)
             sys.exit(1)
 
-        # Buat operator dummy (expr=0) agar __init__ tidak crash
         op = LaplaceOperator(0, causal=False, show_steps=args.show_steps)
 
         # Solve ODE
@@ -62,9 +60,8 @@ def main():
         except Exception as e:
             print(f"Error solving ODE: {e}", file=sys.stderr)
             if args.show_steps: raise
-        return  # done
+        return
 
-    # Bukan ODE → parsing fungsi biasa
     try:
         func_expr = sympify(args.expr, locals={'t': t})
     except Exception as e:
