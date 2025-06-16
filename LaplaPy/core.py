@@ -264,7 +264,7 @@ class LaplaceOperator:
                 self._add_step(f"[ERROR] Could not compute inverse: {str(e)}")
             return None
 
-        def solve_ode(self, ode, initial_conditions=None):
+    def solve_ode(self, ode, initial_conditions=None):
         """
         Solve ordinary differential equation using Laplace transforms
         
