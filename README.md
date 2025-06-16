@@ -35,11 +35,11 @@ pip install -e .
 ## Quickstart
 
 ```python
-from LaplaPy import LaplaPyerator, t, s
+from LaplaPy import LaplaceOperator, t, s
 from sympy import exp, sin
 
 # 1. Initialize with a symbolic expression
-op = LaplaPyerator("exp(-3*t) + sin(2*t)")
+op = LaplaceOperator("exp(-3*t) + sin(2*t)")
 
 # 2. Compute first derivative, showing each step:
 d1 = op.derivative(order=1)
