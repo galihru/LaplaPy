@@ -14,3 +14,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License"
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/4211421036/LaplaPy"
+"Repository" = "https://github.com/4211421036/LaplaPy"
