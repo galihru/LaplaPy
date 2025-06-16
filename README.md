@@ -1,14 +1,5 @@
 # LaplaPy
 
-<p align="center" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0.5em;">
-  <a href="https://pypi.org/project/LaplaPy/">
-    <img src="https://img.shields.io/pypi/v/LaplaPy.svg" alt="PyPI version"/>
-  </a>
-  <a href="https://pypi.org/project/LaplaPy/">
-    <img src="https://img.shields.io/pypi/dm/LaplaPy.svg" alt="PyPI downloads"/>
-  </a>
-</p>
-
 **Symbolic Differentiation & Laplace Transform Utility**  
 A scientific Python library for step-by-step symbolic computation of time-domain derivatives and their Laplace transforms.
 
