@@ -275,51 +275,82 @@ class LaplaceOperator:
                 self._add_step(f"[ERROR] Could not compute inverse: {str(e)}")
             return None
 
-    def solve_ode(self, ode, initial_conditions=None):
+    def solve_ode(self, ode: Eq, initial_conditions=None):
         """
         Solve ordinary differential equation using Laplace transforms
-        
+
         Parameters:
-        ode: sympy.Eq - differential equation
-        initial_conditions: dict - initial conditions
-        
-        Returns: solution function f(t)
+          ode: sympy.Eq, misal Eq(diff(f(t), t, t) + 4*f(t), exp(-t))
+          initial_conditions: dict, e.g. {0: f(0), 1: f'(0), ...}
+
+        Returns:
+          solution f(t) in time domain
         """
         if initial_conditions is None:
             initial_conditions = {}
-        
+
         if self.show_steps:
             self._add_step("\n[SOLVING ODE USING LAPLACE]")
             self._add_step(f"Equation: {pretty(ode)}")
             self._add_step(f"Initial conditions: {initial_conditions}")
-        
-        # Extract left and right sides
+
+        # 1) Define the Laplace‐domain unknown F(s)
+        F_s = symbols('F_s')
+
+        # 2) Transform each side using rules
+        #    L{f''} = s^2 F_s - s f(0) - f'(0)
+        #    L{f}  = F_s
+        #    L{g(t)} = laplace_transform(g, t, s)
         lhs = ode.lhs
         rhs = ode.rhs
-        
-        # Apply Laplace transform to both sides
-        L_lhs = self.laplace_of_derivative_from_ode(lhs, initial_conditions)
-        L_rhs, _, _, _ = self.laplace(rhs)
-        
-        # Form algebraic equation in s-domain
-        s_eq = Eq(L_lhs, L_rhs)
-        
+
+        # Build Laplace of LHS term by term
+        LHS_s = 0
+        for term in lhs.as_ordered_terms():
+            if term.has(Function('f')) and term.is_Derivative:
+                # Derivative of order n
+                order = len(term.args) - 1
+                # L{f^(n)}:
+                expr = s**order * F_s
+                # subtract initial conditions
+                for k in range(order):
+                    expr -= s**(order - 1 - k) * initial_conditions.get(k, 0)
+                LHS_s += expr
+            elif term.has(Function('f')):
+                # term is a*f(t)
+                coeff = term / Function('f')(t)  # get coefficient a
+                LHS_s += coeff * F_s
+            else:
+                # ignore non‐f terms here
+                pass
+
+        # Transform RHS to s‐domain
+        RHS_s, _, _ = laplace_transform(rhs, t, s, noconds=True)
+        RHS_s = simplify(RHS_s)
+
+        # 3) Form and solve algebraic equation: LHS_s = RHS_s
+        s_eq = Eq(LHS_s, RHS_s)
         if self.show_steps:
-            self._add_step(f"Transformed equation: {pretty(s_eq)}")
-        
-        # Solve for F(s) — tambahkan tanda ')' yang hilang
-        F_s = solve(s_eq, self.laplace(self.expr)[0])
-        
+            self._add_step(f"Equation in s‐domain: {pretty(s_eq)}")
+
+        sol = solve(s_eq, F_s)
+        if not sol:
+            raise ValueError("Could not solve for F(s)")
+        F_s_expr = simplify(sol[0])
+
         if self.show_steps:
-            self._add_step(f"Solution in s-domain: F(s) = {pretty(F_s)}")
-        
-        # Apply inverse Laplace
-        solution = self.inverse_laplace(F_s)
-        
+            self._add_step(f"Solved F(s): {pretty(F_s_expr)}")
+
+        # 4) Inverse Laplace
+        inv = inverse_laplace_transform(F_s_expr, s, t)
+        inv = simplify(inv)
+        if self.causal:
+            inv = inv * Heaviside(t)
+
         if self.show_steps:
-            self._add_step(f"Time-domain solution: f(t) = {pretty(solution)}")
-        
-        return solution
+            self._add_step(f"Inverse Laplace: {pretty(inv)}")
+
+        return inv
 
     def laplace_of_derivative_from_ode(self, expr, initial_conditions):
         """
