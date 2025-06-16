@@ -264,12 +264,12 @@ class LaplaceOperator:
                 self._add_step(f"[ERROR] Could not compute inverse: {str(e)}")
             return None
 
-    def solve_ode(self, ode, initial_conditions=None):
+        def solve_ode(self, ode, initial_conditions=None):
         """
         Solve ordinary differential equation using Laplace transforms
         
         Parameters:
-        ode: sympy.Eq - differential equation (e.g., Eq(diff(f(t), t, t) + 2*diff(f(t), t) + f(t), sin(t)))
+        ode: sympy.Eq - differential equation
         initial_conditions: dict - initial conditions
         
         Returns: solution function f(t)
@@ -296,8 +296,8 @@ class LaplaceOperator:
         if self.show_steps:
             self._add_step(f"Transformed equation: {pretty(s_eq)}")
         
-        # Solve for F(s)
-        F_s = solve(s_eq, self.laplace(self.expr)[0]
+        # Solve for F(s) — tambahkan tanda ')' yang hilang
+        F_s = solve(s_eq, self.laplace(self.expr)[0])
         
         if self.show_steps:
             self._add_step(f"Solution in s-domain: F(s) = {pretty(F_s)}")
