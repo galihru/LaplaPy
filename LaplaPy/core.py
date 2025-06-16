@@ -276,16 +276,6 @@ class LaplaceOperator:
             return None
 
     def solve_ode(self, ode: Eq, initial_conditions=None):
-        """
-        Solve ordinary differential equation using Laplace transforms
-
-        Parameters:
-          ode: sympy.Eq, misal Eq(diff(f(t), t, t) + 4*f(t), exp(-t))
-          initial_conditions: dict, e.g. {0: f(0), 1: f'(0), ...}
-
-        Returns:
-          solution f(t) in time domain
-        """
         if initial_conditions is None:
             initial_conditions = {}
 
@@ -294,46 +284,39 @@ class LaplaceOperator:
             self._add_step(f"Equation: {pretty(ode)}")
             self._add_step(f"Initial conditions: {initial_conditions}")
 
-        # 1) Define the Laplace‐domain unknown F(s)
+        # 1) Definisikan F_s sebagai simbol
         F_s = symbols('F_s')
 
-        # 2) Transform each side using rules
-        #    L{f''} = s^2 F_s - s f(0) - f'(0)
-        #    L{f}  = F_s
-        #    L{g(t)} = laplace_transform(g, t, s)
         lhs = ode.lhs
         rhs = ode.rhs
 
-        # Build Laplace of LHS term by term
+        # 2) Transform LHS term‐by‐term
         LHS_s = 0
         for term in lhs.as_ordered_terms():
-            if term.has(Function('f')) and term.is_Derivative:
-                # Derivative of order n
+            if term.is_Derivative:
+                # orde turunan n
                 order = len(term.args) - 1
-                # L{f^(n)}:
                 expr = s**order * F_s
-                # subtract initial conditions
                 for k in range(order):
                     expr -= s**(order - 1 - k) * initial_conditions.get(k, 0)
                 LHS_s += expr
             elif term.has(Function('f')):
-                # term is a*f(t)
-                coeff = term / Function('f')(t)  # get coefficient a
+                # koefisien * F_s
+                coeff = term / Function('f')(t)
                 LHS_s += coeff * F_s
             else:
-                # ignore non‐f terms here
+                # abaikan
                 pass
 
-        # Transform RHS to s‐domain
-        RHS_s, _, _ = laplace_transform(rhs, t, s, noconds=True)
+        # 3) Transform RHS (single return)
+        RHS_s = laplace_transform(rhs, t, s, noconds=True)
         RHS_s = simplify(RHS_s)
 
-        # 3) Form and solve algebraic equation: LHS_s = RHS_s
-        s_eq = Eq(LHS_s, RHS_s)
         if self.show_steps:
-            self._add_step(f"Equation in s‐domain: {pretty(s_eq)}")
+            self._add_step(f"Equation in s‐domain: {pretty(Eq(LHS_s, RHS_s))}")
 
-        sol = solve(s_eq, F_s)
+        # 4) Solve untuk F_s
+        sol = solve(Eq(LHS_s, RHS_s), F_s)
         if not sol:
             raise ValueError("Could not solve for F(s)")
         F_s_expr = simplify(sol[0])
@@ -341,7 +324,7 @@ class LaplaceOperator:
         if self.show_steps:
             self._add_step(f"Solved F(s): {pretty(F_s_expr)}")
 
-        # 4) Inverse Laplace
+        # 5) Inverse Laplace
         inv = inverse_laplace_transform(F_s_expr, s, t)
         inv = simplify(inv)
         if self.causal:
