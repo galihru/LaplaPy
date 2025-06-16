@@ -127,24 +127,38 @@ class LaplaceOperator:
 
     def _find_poles_zeros(self, expr):
         """Find poles and zeros of the Laplace transform"""
-        # Convert to rational function
         num, den = fraction(expr)
         if den == 1:
-            return [], []  # Entire function, no poles
-        
-        # Factor the denominator for poles
+            return [], []
+
+        # Buat Poly untuk komputasi numerik akar
         den_poly = Poly(den, s)
-        poles = solveset(den_poly, s, domain=S.Reals)
-        if not poles.is_FiniteSet:
-            poles = [rootof(den_poly, s, k) for k in range(degree(den_poly, s))]
-        
-        # Factor the numerator for zeros
         num_poly = Poly(num, s)
-        zeros = solveset(num_poly, s, domain=S.Reals)
-        if not zeros.is_FiniteSet:
-            zeros = [rootof(num_poly, s, k) for k in range(degree(num_poly, s))]
-        
-        return list(poles), list(zeros)
+
+        # Akar penyebut → poles
+        try:
+            poles_set = solveset(den, s, domain=S.Complexes)
+        except Exception:
+            poles_set = None
+
+        if isinstance(poles_set, set) or getattr(poles_set, 'is_FiniteSet', False):
+            poles = list(poles_set)
+        else:
+            # fallback: gunakan nroots untuk akar (mungkin kompleks)
+            poles = den_poly.nroots()
+
+        # Akar pembilang → zeros
+        try:
+            zeros_set = solveset(num, s, domain=S.Complexes)
+        except Exception:
+            zeros_set = None
+
+        if isinstance(zeros_set, set) or getattr(zeros_set, 'is_FiniteSet', False):
+            zeros = list(zeros_set)
+        else:
+            zeros = num_poly.nroots()
+
+        return poles, zeros
 
     def _check_laplace_existence(self, expr):
         """Verify if the Laplace transform exists"""
