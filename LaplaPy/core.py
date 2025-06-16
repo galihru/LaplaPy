@@ -148,23 +148,20 @@ class LaplaceOperator:
 
     def _check_laplace_existence(self, expr):
         """Verify if the Laplace transform exists"""
-        # Check if the function is of exponential order
         M, α = symbols('M α', real=True, positive=True)
         condition = Eq(Abs(expr), M * exp(α * t))
-        solutions = solve(condition, (M, α), dict=True)
-        
-        if not solutions:
-            if self.show_steps:
-                self._add_step("[WARNING] Function may not be of exponential order")
-            return False
-        
-        # Check if the function is piecewise continuous
-        # This is simplified - a full implementation would need interval analysis
+        try:
+            solutions = solve(condition, (M, α), dict=True)
+        except Exception:
+            solutions = []
+    
+        if not solutions and self.show_steps:
+            self._add_step("[WARNING] Could not verify exponential order via solve, proceeding anyway.")
+    
         discontinuities = self._find_discontinuities(expr)
-        if discontinuities:
-            if self.show_steps:
-                self._add_step(f"[NOTE] Function has discontinuities at: {discontinuities}")
-        
+        if discontinuities and self.show_steps:
+            self._add_step(f"[NOTE] Function has discontinuities at: {discontinuities}")
+    
         return True
 
     def _find_discontinuities(self, expr):
