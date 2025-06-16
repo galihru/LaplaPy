@@ -31,4 +31,4 @@ t, s = symbols('t s')
 __all__ = ['LaplaceOperator', 't', 's']
 
 # Package version
-__version__ = '0.1.2'
+__version__ = '0.1.3'
