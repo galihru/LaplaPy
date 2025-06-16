@@ -6,27 +6,25 @@ from .core import LaplaceOperator
 t, s = symbols('t s', real=True, positive=True)
 
 def parse_initial_conditions(ic_list):
-    """Parse list like ['f(0)=1', \"f'(0)=0\"] → {0:1.0,1:0.0}"""
     ics = {}
     for ic_str in ic_list or []:
         key, val = ic_str.split("=")
-        # count number of primes for derivative order
-        order = key.count("'")
+        order = key.count("'")  # jumlah prime → order
         ics[order] = float(val)
     return ics
 
 def main():
     parser = argparse.ArgumentParser(prog="LaplaPy",
         description="CLI for LaplaceOperator")
-    parser.add_argument("expr", help="Function f(t) or ODE string")
+    parser.add_argument("expr", help="Function f(t) or ODE string, e.g. \"exp(-2*t)*sin(3*t)\" or \"f''(t)+4*f(t)=exp(-t)\"")
     parser.add_argument("--deriv", "-d", type=int, metavar="N",
                         help="Compute Nth derivative of f(t)")
     parser.add_argument("--laplace",   action="store_true",
-                        help="Compute Laplace transform")
+                        help="Compute Laplace transform of f(t)")
     parser.add_argument("--inverse",   action="store_true",
-                        help="Compute inverse Laplace transform")
+                        help="Compute inverse Laplace transform of f(t)")
     parser.add_argument("--ode",       action="store_true",
-                        help="Solve ODE given as Eq(lhs, rhs)")
+                        help="Solve ODE given as \"LHS=RHS\"")
     parser.add_argument("--ic",        nargs="+",
                         help="Initial conditions, e.g. f(0)=0 f'(0)=1")
     parser.add_argument("--causal",    dest="causal", action="store_true",
@@ -40,37 +38,53 @@ def main():
     args = parser.parse_args()
     ics = parse_initial_conditions(args.ic)
 
-    expr_str = args.expr
-
+    # Jika ODE mode, parse string menjadi Eq(lhs, rhs)
     if args.ode:
-        if "=" in expr_str:
-            lhs_str, rhs_str = expr_str.split("=", 1)
-            try:
-                lhs = sympify(lhs_str, locals={'t': t})
-                rhs = sympify(rhs_str, locals={'t': t})
-                expr = Eq(lhs, rhs)
-            except Exception as e:
-                print(f"Error parsing ODE sides: {e}", file=sys.stderr)
-                sys.exit(1)
-        else:
+        if "=" not in args.expr:
             print("Error: ODE must contain '=' to separate LHS and RHS.", file=sys.stderr)
             sys.exit(1)
-    else:
-        expr = sympify(expr_str, locals={'t': t})
+        lhs_str, rhs_str = args.expr.split("=", 1)
+        try:
+            lhs = sympify(lhs_str, locals={'t': t})
+            rhs = sympify(rhs_str, locals={'t': t})
+            ode_eq = Eq(lhs, rhs)
+        except Exception as e:
+            print(f"Error parsing ODE: {e}", file=sys.stderr)
+            sys.exit(1)
 
-    op = LaplaceOperator(expr,
+        # Buat operator dummy (expr=0) agar __init__ tidak crash
+        op = LaplaceOperator(0, causal=False, show_steps=args.show_steps)
+
+        # Solve ODE
+        try:
+            sol = op.solve_ode(ode_eq, initial_conditions=ics)
+            print(f"\nODE Solution:\n{pretty(sol)}")
+        except Exception as e:
+            print(f"Error solving ODE: {e}", file=sys.stderr)
+            if args.show_steps: raise
+        return  # done
+
+    # Bukan ODE → parsing fungsi biasa
+    try:
+        func_expr = sympify(args.expr, locals={'t': t})
+    except Exception as e:
+        print(f"Error parsing expression: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    op = LaplaceOperator(func_expr,
                          causal=args.causal,
                          show_steps=args.show_steps)
 
+    # Derivative
     if args.deriv:
         try:
-            der = op.derivative(order=args.deriv,
-                                initial_conditions=ics)
+            der = op.derivative(order=args.deriv, initial_conditions=ics)
             print(f"\nDerivative (order {args.deriv}):\n{pretty(der)}")
         except Exception as e:
             print(f"Error computing derivative: {e}", file=sys.stderr)
             if args.show_steps: raise
 
+    # Laplace transform
     if args.laplace:
         try:
             L, roc, poles, zeros = op.laplace()
@@ -78,27 +92,17 @@ def main():
             print(f"ROC: {roc}")
             print(f"Poles: {[pretty(p) for p in poles]}")
             print(f"Zeros: {[pretty(z) for z in zeros]}")
-        except ValueError as e:
-            print(f"Warning: Could not compute poles/zeros automatically: {e}", file=sys.stderr)
         except Exception as e:
             print(f"Error computing Laplace: {e}", file=sys.stderr)
             if args.show_steps: raise
 
+    # Inverse Laplace
     if args.inverse:
         try:
             inv = op.inverse_laplace()
             print(f"\nInverse Laplace:\n{pretty(inv)}")
         except Exception as e:
             print(f"Error computing inverse Laplace: {e}", file=sys.stderr)
-            if args.show_steps: raise
-
-    # 4) Solve ODE
-    if args.ode:
-        try:
-            sol = op.solve_ode(expr, initial_conditions=ics)
-            print(f"\nODE Solution:\n{pretty(sol)}")
-        except Exception as e:
-            print(f"Error solving ODE: {e}", file=sys.stderr)
             if args.show_steps: raise
 
 if __name__ == "__main__":
