@@ -25,7 +25,7 @@ pip install LaplaPy
 Or for local development:
 
 ```bash
-git clone https://github.com/yourusername/LaplaPy.git
+git clone https://github.com/4211421036/LaplaPy.git
 cd LaplaPy
 pip install -e .
 ```
