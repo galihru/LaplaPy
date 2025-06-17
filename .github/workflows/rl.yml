@@ -4,10 +4,7 @@ on:
   push:
     branches:
       - "**"
-    tags:
-      - 'v*.*.*'
 
-# Give the Action permission to create releases
 permissions:
   contents: write  # needed to create GitHub Releases
 
@@ -18,19 +15,33 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Extract version from tag
+      - name: Read version from pyproject.toml
         id: get_version
         run: |
-          # GITHUB_REF is e.g. "refs/tags/v0.1.0"
-          VERSION=${GITHUB_REF_NAME#v}
+          VERSION=$(grep '^version' pyproject.toml \
+                    | head -1 \
+                    | sed -E 's/version *= *"(.*)"/\1/')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Git tag
+        run: |
+          TAG="v${{ steps.get_version.outputs.VERSION }}"
+          # Only tag if it doesn't already exist
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "$TAG"
+            git push origin "$TAG"
+          else
+            echo "Tag $TAG already exists, skipping."
+          fi
 
       - name: Draft GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          # Use the full tag, e.g. "v0.1.0"
-          tag_name: "${{ github.ref_name }}"
           # Release title
           name: "LaplaPy"
           body: |
