@@ -176,7 +176,7 @@ $$
 
 ---
 
-## 🛠 Development & Testing
+## Development & Testing
 
 ```bash
 # Install dev extras
@@ -190,21 +190,6 @@ ruff .
 
 # Type-check (mypy)
 mypy LaplaPy
-```
-
-**Repo structure**:
-
-```
-LaplaPy/
-├── core.py
-├── cli.py
-├── __init__.py
-├── tests/
-│   └── test_lapla_py_detailed.py
-├── README.md
-├── pyproject.toml
-└── .github/workflows/
-    └── python-publish.yml
 ```
 
 ---
