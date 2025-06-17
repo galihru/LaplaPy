@@ -1,9 +1,8 @@
 # LaplaPy: Advanced Symbolic Laplace Transform Analysis
 
-[![PyPI version](https://img.shields.io/pypi/v/LaplaPy.svg)](https://pypi.org/project/LaplaPy/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/LaplaPy.svg)](https://pypi.org/project/LaplaPy/)
-[![Build & Publish](https://github.com/4211421036/LaplaPy/actions/workflows/py.yml/badge.svg)](https://github.com/4211421036/LaplaPy/actions)
-[![Used by](https://img.shields.io/github/used-by/4211421036/LaplaPy.svg)](https://github.com/4211421036/LaplaPy/network/dependents)
+[![PyPI Version](https://img.shields.io/pypi/v/LaplaPy?color=blue)](https://pypi.org/project/LaplaPy/)
+[![PyPI Downloads](https://static.pepy.tech/badge/LaplaPy/month)](https://pepy.tech/project/LaplaPy)
+[![GitHub Actions](https://github.com/4211421036/LaplaPy/actions/workflows/py.yml/badge.svg)](https://github.com/4211421036/LaplaPy/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
