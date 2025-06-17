@@ -74,13 +74,7 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPIT_API_TOKEN }}
-        run: |
-          python -m twine upload \
-            --repository-url https://test.pypi.org/legacy/ \
-            --verbose \
-            --skip-existing \
-            --non-interactive \
-            dist/*
+        run: python -m twine upload --skip-existing dist/*
 
       - name: Update Deployment Status
         uses: actions/github-script@v7
