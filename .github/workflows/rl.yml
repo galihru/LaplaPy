@@ -26,23 +26,27 @@ jobs:
                     | sed -E 's/version *= *"(.*)"/\1/')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Create Git tag
+      - name: Create & push tag
+        id: create_tag
         run: |
           TAG="v${{ steps.get_version.outputs.VERSION }}"
-          # Only tag if it doesn't already exist
-          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists – skipping creation."
+          else
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git tag "$TAG"
             git push origin "$TAG"
-          else
-            echo "Tag $TAG already exists, skipping."
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Draft GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.tag.outputs.TAG }}
+          # here we reference exactly the tag we just created
+          tag_name: ${{ steps.create_tag.outputs.TAG }}
           # Release title
           name: "LaplaPy"
           body: |
