@@ -23,7 +23,7 @@ jobs:
         id: get_version
         run: |
           # GITHUB_REF is e.g. "refs/tags/v0.1.0"
-          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=${GITHUB_REF_NAME#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Draft GitHub Release
