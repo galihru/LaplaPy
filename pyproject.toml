@@ -42,9 +42,7 @@ doctest_optionflags = [
 markers = [
   "tooslow",
 ]
-norecursedirs = [
-  "LaplaPy/parsing/*/test-examples",
-]
+norecursedirs = []
 
 [tool.coverage.report]
 exclude_lines = [
@@ -60,9 +58,7 @@ select = [
 ignore = [
   "E501",  # allow longer lines
 ]
-exclude = [
-  "LaplaPy/core/generated.py"
-]
+exclude = []
 dummy-variable-rgx = "^(_|__.*__)$"
 
 [tool.mypy]
