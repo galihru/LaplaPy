@@ -4,20 +4,72 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "LaplaPy"
-version = "0.2.2"
-description = "Symbolic derivative & Laplace transform with step-by-step output"
+version = "0.2.3"
+description = "Symbolic Laplace transforms & ODE solving with step-by-step output"
 readme = "README.md"
-authors = [{name="GALIH RIDHO UTOMO", email="g4lihru@students.unnes.ac.id"}]
-license = {text="MIT"}
-dependencies = ["sympy>=1.10"]
+authors = [{name = "GALIH RIDHO UTOMO", email = "g4lihru@students.unnes.ac.id"}]
+license = {text = "MIT"}
+dependencies = ["sympy>=1.10",  "numpy"]
 classifiers = [
   "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License"
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Mathematics",
 ]
 
 [project.scripts]
 LaplaPy = "LaplaPy.cli:main"
 
 [project.urls]
-"Homepage" = "https://github.com/4211421036/LaplaPy"
-"Repository" = "https://github.com/4211421036/LaplaPy"
+Homepage    = "https://github.com/4211421036/LaplaPy"
+Repository  = "https://github.com/4211421036/LaplaPy"
+
+[tool.pytest.ini_options]
+addopts = "-m 'not slow and not tooslow'"
+filterwarnings = [
+  "ignore:More than 20 figures have been opened.*:RuntimeWarning",
+  "ignore:FigureCanvasAgg is non-interactive, and thus cannot be shown:UserWarning",
+]
+testpaths = [
+  "LaplaPy",
+  "tests",
+]
+doctest_optionflags = [
+  "NORMALIZE_WHITESPACE",
+  "IGNORE_EXCEPTION_DETAIL",
+  "ELLIPSIS",
+  "FLOAT_CMP",
+]
+markers = [
+  "tooslow",
+]
+norecursedirs = [
+  "LaplaPy/parsing/*/test-examples",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "assert False",
+]
+
+[tool.ruff]
+select = [
+  "E", "F", "C90", "B", "PLR", "PIE", "TRY", "LOG"
+]
+ignore = [
+  "E501",  # allow longer lines
+]
+exclude = [
+  "LaplaPy/core/generated.py"
+]
+dummy-variable-rgx = "^(_|__.*__)$"
+
+[tool.mypy]
+warn_unused_configs = true
+ignore_missing_imports = true
+strict = false
+
+[tool.pyright]
+include = ["LaplaPy"]
+reportSelfClsParameterName = false
