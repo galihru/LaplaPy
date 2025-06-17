@@ -1,40 +1,48 @@
 # LaplaPy: Advanced Symbolic Laplace Transform Analysis
 
-**Scientific Computing Package for Differential Equations, System Analysis, and Control Theory**  
-A comprehensive Python library for symbolic Laplace transforms with rigorous mathematical foundations, designed for engineers, scientists, and researchers.
+[![PyPI version](https://img.shields.io/pypi/v/LaplaPy.svg)](https://pypi.org/project/LaplaPy/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/LaplaPy.svg)](https://pypi.org/project/LaplaPy/)
+[![Build & Publish](https://github.com/4211421036/LaplaPy/actions/workflows/python-publish.yml/badge.svg)](https://github.com/4211421036/LaplaPy/actions)
+[![Used by](https://img.shields.io/github/used-by/4211421036/LaplaPy.svg)](https://github.com/4211421036/LaplaPy/network/dependents)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
 
-## Overview
+## 📖 Overview
 
-`LaplaPy` provides a powerful symbolic computation environment for:
+**LaplaPy** is a professional-grade Python library for:
 
-1. **Time-domain analysis**: Derivatives, integrals, and function manipulation
-2. **Laplace transforms**: With rigorous Region of Convergence (ROC) determination
-3. **System analysis**: Pole-zero identification, stability analysis, and frequency response
-4. **ODE solving**: Complete solution of linear differential equations with initial conditions
-5. **Control system tools**: Bode plots, time-domain responses, and transfer function analysis
+* **Symbolic Laplace transforms** with rigorous *Region of Convergence* (ROC) analysis
+* **Linear ODE solving** via Laplace methods, including initial conditions
+* **Control system analysis**: pole-zero maps, stability checks, frequency/time responses
+* **Educational, step-by-step output modes** for teaching and self-study
+
+Designed for engineers, scientists, and researchers in control theory, signal processing, electrical/mechanical systems, and applied mathematics.
 
 ---
 
-## Key Features
+## Features
 
-- **Mathematical Rigor**: Implements Laplace transform theory with proper ROC analysis
-- **Causal System Modeling**: Automatic handling of Heaviside functions for physical systems
-- **Step-by-Step Solutions**: Educational mode for learning complex concepts
-- **Comprehensive System Analysis**: Pole-zero identification, stability criteria, frequency response
-- **ODE Solver**: Complete solution workflow for linear differential equations
-- **Visualization Tools**: Bode plot generation and time-domain simulations
+1. **Forward & Inverse Laplace** with automatic ROC determination
+2. **ODE Solver**: direct transform–solve–invert workflow for linear constant-coefficient equations
+3. **Pole-Zero Analysis**: identify all poles and zeros symbolically
+4. **Stability Assessment**: evaluate pole locations in the complex plane
+5. **Frequency Response & Bode**: generate magnitude/phase plots data for `ω ∈ [ω_min, ω_max]`
+6. **Time-Domain Response**: compute response to arbitrary inputs (e.g., steps, impulses, sinusoids)
+7. **Causal/Non-Causal Modes**: model physical vs. mathematical systems
+8. **Step-by-Step Tracing**: verbose mode to print every algebraic step (educational)
 
 ---
 
 ## Installation
 
+**From PyPI**:
+
 ```bash
 pip install LaplaPy
 ```
 
-For development:
+**From source (dev)**:
 
 ```bash
 git clone https://github.com/4211421036/LaplaPy.git
@@ -42,185 +50,179 @@ cd LaplaPy
 pip install -e .[dev]
 ```
 
+Dependencies: `sympy>=1.10`, `numpy`.
+
 ---
 
-## Quickstart
+## Quickstart Examples
 
-### Basic Operations
+### 1. Basic Laplace Transform
 
 ```python
 from LaplaPy import LaplaceOperator, t, s
 
-# Initialize with expression (causal system by default)
-op = LaplaceOperator("exp(-3*t) + sin(2*t)", show_steps=True)
-
-# Compute derivative
-d1 = op.derivative(order=1)
-
-# Laplace transform with ROC analysis
-F_s, roc, poles, zeros = op.laplace()
-
-# Inverse Laplace transform
-f_t = op.inverse_laplace()
+# f(t) = e^{-3t} + sin(2t)
+op = LaplaceOperator("exp(-3*t) + sin(2*t)", show_steps=False)
+F_s = op.forward_laplace()
+print("F(s) =", F_s)       # 1/(s+3) + 2/(s^2+4)
+print("ROC:", op.roc)       # Re(s) > -3
 ```
 
-### ODE Solving
+### 2. Inverse Transform
+
+```python
+# Recover f(t)
+f_recov = op.inverse_laplace()
+print("f(t) =", f_recov)    # exp(-3*t) + sin(2*t)
+```
+
+### 3. Solve ODE
 
 ```python
 from sympy import Eq, Function, Derivative, exp
 
-# Define a differential equation
 f = Function('f')(t)
-ode = Eq(Derivative(f, t, t) + 3*Derivative(f, t) + 2*f, exp(-t))
-
-# Solve with initial conditions
-solution = op.solve_ode(ode, {0: 0, 1: 1})  # f(0)=0, f'(0)=1
+ode = Eq(Derivative(f, t, 2) + 3*Derivative(f, t) + 2*f,
+         exp(-t))
+# ICs: f(0)=0, f'(0)=1
+sol = LaplaceOperator(0).solve_ode(node,
+      {f.subs(t,0):0, Derivative(f,t).subs(t,0):1})
+print(sol)  # (e^{-t} - e^{-2t})
 ```
 
-### System Analysis
+### 4. System Analysis & Bode Data
 
 ```python
-# Frequency response
-magnitude, phase = op.frequency_response()
+# H(s) = (s+1)/(s^2+0.2*s+1)
+op = LaplaceOperator("(s+1)/(s**2+0.2*s+1)")
+op.forward_laplace()
+analysis = op.system_analysis()
+# poles, zeros, stability
+defp print(analysis)
+# Bode data
+ω, mag_db, phase = op.bode_plot(w_min=0.1, w_max=100, points=200)
+```
 
-# Time-domain response to input
-response = op.time_domain_response("sin(4*t)")
+### 5. Time-Domain Response
 
-# Generate Bode plot data
-omega, mag_db, phase_deg = op.bode_plot(ω_range=(0.1, 100), points=100)
+```python
+# Response to sin(4t)
+r = op.time_domain_response("sin(4*t)")
+print(r)
 ```
 
 ---
 
 ## CLI Usage
 
+The `LaplaPy` console script provides a quick interface:
+
 ```bash
-LaplaPy "exp(-2*t)*sin(3*t)" --laplace --deriv 2
-LaplaPy "s/(s**2 + 4)" --inverse
-LaplaPy "Derivative(f(t), t, t) + 4*f(t) = exp(-t)" --ode --ic "f(0)=0" "f'(0)=1"
+# Laplace transform + 2nd derivative:
+LaplaPy "exp(-2*t)*sin(3*t)" --laplace
+
+# Inverse Laplace:
+LaplaPy "1/(s**2+4)" --inverse
+
+# Solve ODE with ICs:
+LaplaPy "f''(t)+4*f(t)=exp(-t)" --ode \
+        --ic "f(0)=0" "f'(0)=1"
 ```
 
-**Options**:
-- `--deriv N`: Compute Nth derivative
-- `--laplace`: Compute Laplace transform
-- `--inverse`: Compute inverse Laplace transform
-- `--ode`: Solve ODE (provide equation)
-- `--ic`: Initial conditions (e.g., "f(0)=0", "f'(0)=1")
-- `--causal/--noncausal`: System causality assumption
-- `--quiet`: Suppress step-by-step output
+**Flags**:
+
+* `--laplace` (`-L`) : forward transform
+* `--inverse` (`-I`): inverse transform
+* `--ode` (`-O`)    : solve ODE
+* `--ic`: initial conditions
+* `--quiet`: suppress verbose steps
+* `--causal/--noncausal`: choose system causality
 
 ---
 
-## Mathematical Foundations
+## 📚 Mathematical Foundations
 
-### Laplace Transform
-$$\mathcal{L}\{f(t)\}(s) = \int_{0^-}^{\infty} e^{-st} f(t)  dt$$
+### Laplace Transform Definition
+
+$$
+\mathcal{L}\{f(t)\}(s)
+= \int_{0^-}^{\infty} e^{-st}f(t)\,dt
+$$
 
 ### Derivative Property
-$$\mathcal{L}\{f^{(n)}(t)\} = s^n F(s) - \sum_{k=1}^{n} s^{n-k} f^{(k-1)}(0^+)$$
 
-### Region of Convergence
-- For causal systems: Re(s) > σ_max (right-half plane)
-- Proper ROC determination for stability analysis
+$$
+\mathcal{L}\{f^{(n)}(t)\}(s)
+= s^nF(s)-\sum_{k=0}^{n-1}s^{n-1-k}f^{(k)}(0^+)
+$$
 
-### Pole-Zero Analysis
-- Transfer function: $H(s) = \frac{N(s)}{D(s)}$
-- Poles: Roots of denominator polynomial
-- Zeros: Roots of numerator polynomial
+### Region of Convergence (ROC)
+
+* For causal signals: \$\mathrm{Re}(s) > \max(\mathrm{Re}(\text{poles}))\$
+* ROC ensures transform integrals converge and stability criteria
+
+### Pole-Zero & Stability
+
+* **Poles**: roots of denominator \$D(s)=0\$
+* **Zeros**: roots of numerator \$N(s)=0\$
+* **Stability**: all poles in left-half complex plane
 
 ### Frequency Response
-$$H(j\omega) = H(s)\big|_{s=j\omega} = |H(j\omega)| e^{j\angle H(j\omega)}$$
+
+$$
+H(j\omega)=H(s)\big|_{s=j\omega}
+=|H(j\omega)|e^{j\angle H(j\omega)}
+$$
 
 ---
 
-## Examples
-
-### Second-Order System Analysis
-
-```python
-op = LaplaceOperator("1/(s**2 + 0.6*s + 1)", show_steps=True)
-
-# Get poles and zeros
-F_s, roc, poles, zeros = op.laplace()
-
-# Frequency response
-magnitude, phase = op.frequency_response()
-
-# Bode plot data
-omega, mag_db, phase_deg = op.bode_plot(ω_range=(0.1, 10), points=200)
-```
-
-### Circuit Analysis (RLC Network)
-
-```python
-# Define circuit equation: L*di/dt + R*i + 1/C*∫i dt = V_in
-L, R, C = 0.5, 4, 0.25
-op = LaplaceOperator("V_in(s)", show_steps=True)
-
-# Impedance representation
-Z = L*s + R + 1/(C*s)
-current = op.time_domain_response("V_in(s)/" + str(Z))
-
-# Response to step input
-step_response = current.subs("V_in(s)", "1/s")
-```
-
----
-
-## Development & Testing
+## 🛠 Development & Testing
 
 ```bash
-# Run tests
-pytest tests/
+# Install dev extras
+pip install -e .[dev]
 
-# Generate documentation
-cd docs
-make html
+# Run test suite
+pytest -q
 
-# Contribution guidelines
-CONTRIBUTING.md
+# Lint with ruff
+ruff .
+
+# Type-check (mypy)
+mypy LaplaPy
 ```
 
----
+**Repo structure**:
 
-## Scientific Applications
-
-1. **Control Systems**: Stability analysis, controller design
-2. **Circuit Analysis**: RLC networks, filter design
-3. **Vibration Engineering**: Damped oscillator analysis
-4. **Signal Processing**: System response characterization
-5. **Communication Systems**: Filter design, modulation analysis
-6. **Mechanical Systems**: Spring-mass-damper modeling
-
----
-
-## Documentation Wiki
-
-Full documentation available at:  
-[LaplaPy Documentation WiKi](https://github.com/4211421036/LaplaPy/wiki)
-
-Includes:
-- Mathematical background
-- API reference
-- Tutorial notebooks
-- Application examples
+```
+LaplaPy/
+├── core.py
+├── cli.py
+├── __init__.py
+├── tests/
+│   └── test_lapla_py_detailed.py
+├── README.md
+├── pyproject.toml
+└── .github/workflows/
+    └── python-publish.yml
+```
 
 ---
 
 ## License
 
-MIT License
+Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 ---
 
-## Cite This Work
+## Citation
 
 ```bibtex
 @software{LaplaPy,
-  author = {GALIH RIDHO UTOMO},
-  title = {LaplaPy: Advanced Symbolic Laplace Transform Analysis},
-  year = {2025},
-  publisher = {GitHub},
-  howpublished = {\url{https://github.com/4211421036/LaplaPy}}
+  author    = {GALIH RIDHO UTOMO},
+  title     = {LaplaPy: Advanced Symbolic Laplace Transform Analysis},
+  year      = {2025},
+  url       = {https://github.com/4211421036/LaplaPy},
+  version   = {0.2.2}
 }
 ```
