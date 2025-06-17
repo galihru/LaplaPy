@@ -73,11 +73,14 @@ jobs:
         if: matrix.pypi_env == 'test-pypi'
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.TEST_PYPIT_API_TOKEN }}
+          TWINE_PASSWORD: ${{ secrets.PYPIT_API_TOKEN }}
         run: |
           python -m twine upload \
             --repository-url https://test.pypi.org/legacy/ \
-            --skip-existing dist/*
+            --verbose \
+            --skip-existing \
+            --non-interactive \
+            dist/*
 
       - name: Update Deployment Status
         uses: actions/github-script@v7
