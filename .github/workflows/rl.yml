@@ -42,6 +42,7 @@ jobs:
       - name: Draft GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.tag.outputs.TAG }}
           # Release title
           name: "LaplaPy"
           body: |
