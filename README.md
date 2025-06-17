@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/LaplaPy.svg)](https://pypi.org/project/LaplaPy/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/LaplaPy.svg)](https://pypi.org/project/LaplaPy/)
-[![Build & Publish](https://github.com/4211421036/LaplaPy/actions/workflows/python-publish.yml/badge.svg)](https://github.com/4211421036/LaplaPy/actions)
+[![Build & Publish](https://github.com/4211421036/LaplaPy/actions/workflows/py.yml/badge.svg)](https://github.com/4211421036/LaplaPy/actions)
 [![Used by](https://img.shields.io/github/used-by/4211421036/LaplaPy.svg)](https://github.com/4211421036/LaplaPy/network/dependents)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
