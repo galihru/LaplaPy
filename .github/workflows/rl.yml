@@ -2,6 +2,8 @@ name: Draft GitHub Release
 
 on:
   push:
+    branches:
+      - "**"
     tags:
       - 'v*.*.*'
 
