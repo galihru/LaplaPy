@@ -32,7 +32,7 @@ jobs:
           # Use the full tag, e.g. "v0.1.0"
           tag_name: "${{ github.ref_name }}"
           # Release title
-          name: "LaplaPy v${{ steps.get_version.outputs.VERSION }}"
+          name: "LaplaPy"
           # Simple body, you can expand this or pull from CHANGELOG.md
           body: |
             ## Changelog
