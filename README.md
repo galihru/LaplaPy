@@ -8,7 +8,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 **LaplaPy** is a professional-grade Python library for:
 
