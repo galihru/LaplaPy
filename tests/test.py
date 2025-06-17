@@ -2,87 +2,112 @@ import pytest
 from LaplaPy import LaplaceOperator, t, s
 from sympy import exp, sin, cos, Function, Derivative, Eq, pretty
 
-def test_basic_operations():
-    print("\n=== Basic Operations Test ===")
-    # Initialize with causal assumption (default)
-    op = LaplaceOperator("exp(-3*t) + sin(2*t)", show_steps=True)
-    
-    # Compute derivatives
-    d1 = op.derivative(order=1)
-    print(f"First derivative: {pretty(d1)}")
-    
-    # Laplace transform
-    F_s, roc, poles, zeros = op.laplace()
-    print(f"Laplace transform: {pretty(F_s)}")
-    print(f"ROC: {roc}")
-    print(f"Poles: {[pretty(p) for p in poles]}")
-    print(f"Zeros: {[pretty(z) for z in zeros]}")
-    
-    # Inverse Laplace
-    inv = op.inverse_laplace(F_s)
-    print(f"Inverse Laplace: {pretty(inv)}")
+import pytest
+from LaplaPy import LaplaceOperator, t, s
+from sympy import exp, sin, cos, Function, Derivative, Eq
 
-def test_ode_solving():
-    print("\n=== ODE Solving Test ===")
-    op = LaplaceOperator("f(t)", show_steps=True)
-    
-    # Define ODE: y'' + 3y' + 2y = e^{-t} with initial conditions
+
+def test_forward_laplace_basic():
+    """
+    Test forward Laplace of e^{-3t} + sin(2t).
+    L{e^{-3t}} = 1/(s+3), L{sin(2t)} = 2/(s^2+4)
+    """
+    op = LaplaceOperator(exp(-3*t) + sin(2*t), show_steps=False)
+    F = op.forward_laplace()
+
+    expected = 1/(s + 3) + 2/(s**2 + 4)
+    assert pytest.approx(F.simplify(), rel=1e-6) == expected.simplify()
+
+    # Check region of convergence and pole-zero lists
+    assert "Re(s) > -3" in op.roc or "Re(s) >" in op.roc
+    assert all(p in op.poles for p in [ -3 ])
+    assert any(z==0 for z in op.zeros)
+
+
+def test_inverse_laplace_basic():
+    """
+    Forward + inverse should recover original function.
+    """
+    f_orig = exp(-3*t) + sin(2*t)
+    op = LaplaceOperator(f_orig, show_steps=False)
+    F = op.forward_laplace()
+    f_recov = op.inverse_laplace(F).simplify()
+    assert f_recov.expand() == f_orig.expand()
+
+
+def test_solve_ode_with_initial_conditions():
+    """
+    Solve y'' + 3y' + 2y = e^{-t}, y(0)=0, y'(0)=1
+    Known solution: y(t) = (e^{-t} - e^{-2t})
+    """
     f = Function('f')(t)
     ode = Eq(Derivative(f, t, t) + 3*Derivative(f, t) + 2*f, exp(-t))
-    
-    # Initial conditions: y(0) = 0, y'(0) = 1
-    solution = op.solve_ode(ode, {0: 0, 1: 1})
-    print(f"ODE Solution: {pretty(solution)}")
+    # map sympy objects to IC values
+    ics = {f.subs(t,0): 0, Derivative(f, t).subs(t,0): 1}
+    op = LaplaceOperator(0, show_steps=False)
+    sol = op.solve_ode(ode, ics).simplify()
 
-def test_system_analysis():
-    print("\n=== System Analysis Test ===")
-    # Define a system: H(s) = 1/(s^2 + 2s + 5)
-    op = LaplaceOperator("1/(s**2 + 2*s + 5)", show_steps=False)
-    
-    # Frequency response
-    magnitude, phase = op.frequency_response()
-    print(f"Magnitude response: {pretty(magnitude)}")
-    print(f"Phase response: {pretty(phase)}")
-    
-    # Time-domain response to input
-    response = op.time_domain_response("sin(2*t)")
-    print(f"Time-domain response: {pretty(response)}")
+    # Test initial conditions
+    assert sol.subs(t,0) == 0
+    assert sol.diff(t).subs(t,0) == 1
+    # At large t solution decays
+    assert sol.subs(t,10).evalf() == pytest.approx((exp(-10) - exp(-20)).evalf(), rel=1e-6)
 
-def test_bode_plot():
-    print("\n=== Bode Plot Test ===")
-    # Create a second-order system
-    op = LaplaceOperator("1/(s**2 + 0.5*s + 1)", show_steps=False)
-    
-    # Generate Bode plot data
-    omega, mag_db, phase_deg = op.bode_plot(ω_range=(0.1, 100), points=50)
-    
-    print(f"Bode plot data generated:")
-    print(f"ω range: {omega[0]:.2f} to {omega[-1]:.2f} rad/s")
-    print(f"Magnitude range: {min(mag_db):.2f} dB to {max(mag_db):.2f} dB")
-    print(f"Phase range: {min(phase_deg):.2f}° to {max(phase_deg):.2f}°")
 
-def test_advanced_features():
-    print("\n=== Advanced Features Test ===")
-    # Non-causal system
-    op = LaplaceOperator("exp(2*t)", causal=False, show_steps=True)
-    
-    # Laplace transform of non-causal function
-    F_s, roc, poles, zeros = op.laplace()
-    print(f"Non-causal Laplace transform: {pretty(F_s)}")
-    print(f"ROC: {roc}")
-    
-    # Derivative with initial conditions
-    derivative = op.derivative(order=1, initial_conditions={0: 1})
-    print(f"Derivative with IC: {pretty(derivative)}")
-    
-    # Laplace of derivative with IC
-    L_deriv = op.laplace_of_derivative(order=1, initial_conditions={0: 1})
-    print(f"Laplace of derivative: {pretty(L_deriv)}")
+def test_system_analysis_properties():
+    """
+    Analyze H(s) = (s+1)/(s^2 + 0.2*s + 1)
+    Check that poles and zeros match, and stability is determined.
+    """
+    H = (s + 1)/(s**2 + 0.2*s + 1)
+    op = LaplaceOperator(H, show_steps=False)
+    op.forward_laplace()  # populate poles/zeros
+    analysis = op.system_analysis()
+
+    # Check keys
+    assert set(analysis.keys()) >= { 'poles', 'zeros', 'stability', 'system_type' }
+    # Poles are roots of s^2+0.2s+1
+    poles = analysis['poles']
+    assert len(poles) == 2
+    # Zero at s = -1
+    zeros = analysis['zeros']
+    assert -1 in zeros
+    # Stability: all real parts negative
+    assert analysis['stability'] == 'Stable'
+    # For this transfer function, no poles at origin => type 0
+    assert analysis['system_type'] == 0
+
+
+def test_bode_plot_returns_correct_lengths():
+    """
+    Bode plot for a second-order system returns arrays of correct length.
+    """
+    op = LaplaceOperator(1/(s**2 + 0.5*s + 1), show_steps=False)
+    w, mag_db, phase_deg = op.bode_plot(w_min=0.1, w_max=100, points=100)
+    assert len(w) == 100
+    assert len(mag_db) == 100
+    assert len(phase_deg) == 100
+    # Frequencies should be within specified range
+    assert pytest.approx(w[0], rel=1e-6) == 0.1
+    assert pytest.approx(w[-1], rel=1e-6) == 100
+
+
+def test_time_domain_response_to_sine_input():
+    """
+    Compute time-domain response of H(s)=1/(s^2+2s+5) to sin(2t).
+    """
+    H = 1/(s**2 + 2*s + 5)
+    op = LaplaceOperator(H, show_steps=False)
+    resp = op.time_domain_response(sin(2*t))
+    # Response should be an expression in t containing exponentials or sin/cos
+    assert resp.free_symbols and t in resp.free_symbols
+    assert resp.has(exp) or resp.has(sin) or resp.has(cos)
 
 if __name__ == "__main__":
-    test_basic_operations()
-    test_ode_solving()
-    test_system_analysis()
-    test_bode_plot()
-    test_advanced_features()
+    test_forward_laplace_basic()
+    test_inverse_laplace_basic()
+    test_solve_ode_with_initial_conditions()
+    test_system_analysis_properties()
+    test_bode_plot_returns_correct_lengths()
+    test_time_domain_response_to_sine_input()
     print("\nAll tests completed successfully!")
