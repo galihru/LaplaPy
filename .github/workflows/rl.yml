@@ -1,0 +1,31 @@
+name: Draft GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: get_version
+        run: |
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "${{ github.ref }}"
+          name: "v${{ steps.get_version.outputs.VERSION }}"
+          body: |
+            ## Changelog
+
+            - Release v${{ steps.get_version.outputs.VERSION }}
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
