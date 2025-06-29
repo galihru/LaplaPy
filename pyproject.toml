@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "LaplaPy"
-version = "0.2.4"
+version = "0.2.5"
 description = "Symbolic Laplace transforms & ODE solving with step-by-step output"
 readme = "README.md"
 authors = [{name = "GALIH RIDHO UTOMO", email = "g4lihru@students.unnes.ac.id"}]
@@ -20,8 +20,8 @@ classifiers = [
 LaplaPy = "LaplaPy.cli:main"
 
 [project.urls]
-Homepage    = "https://github.com/4211421036/LaplaPy"
-Repository  = "https://github.com/4211421036/LaplaPy"
+Homepage    = "https://github.com/galihru/LaplaPy"
+Repository  = "https://github.com/galihru/LaplaPy"
 
 [tool.pytest.ini_options]
 addopts = "-m 'not slow and not tooslow'"
