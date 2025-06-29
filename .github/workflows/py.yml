@@ -1,4 +1,4 @@
-name: Release to PyPI & TestPyPI
+name: Release to PyPI & GitHub
 
 on:
   push:
@@ -10,16 +10,10 @@ permissions:
   deployments: write
   id-token: write
 
-env:
-  PACKAGE_NAME: LaplaPy
-
 jobs:
-  build_and_publish:
+  build_publish_and_release:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        pypi_env: ['pypi', 'test-pypi']
-    environment: ${{ matrix.pypi_env }}
+    environment: pypi
 
     steps:
       - name: Check out code
@@ -27,14 +21,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Read package version
-        id: version
+      - name: Read package metadata
+        id: metadata
         run: |
           VERSION=$(grep '^version' pyproject.toml | head -1 | sed -E 's/version *= *"(.*)"/\1/')
+          NAME=$(grep '^name' pyproject.toml | head -1 | sed -E 's/name *= *"(.*)"/\1/')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME=$NAME" >> $GITHUB_OUTPUT
 
-      - name: Start Deployment
-        id: start-deployment
+      - name: Start PyPI Deployment
+        id: create-deployment
         uses: actions/github-script@v7
         with:
           script: |
@@ -42,11 +38,10 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: context.ref,
-              environment: '${{ matrix.pypi_env }}',
+              environment: 'pypi',
               auto_merge: false,
               required_contexts: [],
               transient_environment: true,
-              description: 'Publish to ${{ matrix.pypi_env }}'
             });
             return deployment.data.id;
           result-encoding: string
@@ -56,97 +51,28 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install build dependencies
-        run: python -m pip install --upgrade pip build twine
+      - name: Install build & twine
+        run: |
+          python -m pip install --upgrade pip build twine
 
-      - name: Build package
+      - name: Build sdist & wheel
         run: python -m build --sdist --wheel
 
       - name: Publish to PyPI
-        if: matrix.pypi_env == 'pypi'
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: python -m twine upload --skip-existing dist/*
-
-      - name: Publish to TestPyPI
-        if: matrix.pypi_env == 'test-pypi'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPIT_API_TOKEN }}
-        run: python -m twine upload --skip-existing dist/*
+        run: |
+          python -m twine upload --skip-existing dist/*
 
       - name: Update Deployment Status
         uses: actions/github-script@v7
         with:
           script: |
-            const env_url = '${{ matrix.pypi_env }}' === 'pypi'
-              ? 'https://pypi.org/project/${{ env.PACKAGE_NAME }}/'
-              : 'https://test.pypi.org/project/${{ env.PACKAGE_NAME }}/';
-            
             github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              deployment_id: ${{ steps.start-deployment.outputs.result }},
+              deployment_id: ${{ steps.create-deployment.outputs.result }},
               state: 'success',
-              environment_url: env_url,
-              log_url: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+              environment_url: 'https://pypi.org/project/${{ steps.metadata.outputs.PACKAGE_NAME }}/'
             });
-
-  create_release:
-    needs: build_and_publish
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get version
-        id: version
-        run: |
-          VERSION=$(grep '^version' pyproject.toml | head -1 | sed -E 's/version *= *"(.*)"/\1/')
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Create tag
-        id: create-tag
-        run: |
-          TAG="v${{ steps.version.outputs.VERSION }}"
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists – skipping creation."
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag "$TAG"
-            git push origin "$TAG"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.create-tag.outputs.TAG }}
-          name: "LaplaPy ${{ steps.version.outputs.VERSION }}"
-          body: |
-            # LaplaPy ${{ steps.version.outputs.VERSION }}
-
-            🎉 Released to both PyPI and TestPyPI!
-
-            **Production (PyPI)**: https://pypi.org/project/${{ env.PACKAGE_NAME }}/
-            **Test (TestPyPI)**: https://test.pypi.org/project/${{ env.PACKAGE_NAME }}/
-
-            ## Installation
-
-            ```bash
-            # For production
-            pip install ${{ env.PACKAGE_NAME }}==${{ steps.version.outputs.VERSION }}
-
-            # For testing
-            pip install --index-url https://test.pypi.org/simple/ ${{ env.PACKAGE_NAME }}==${{ steps.version.outputs.VERSION }}
-            ```
-
-            [View full readme](https://github.com/${{ github.repository }}/blob/main/README.md)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
